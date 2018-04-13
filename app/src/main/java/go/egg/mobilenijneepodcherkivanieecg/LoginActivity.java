@@ -47,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
         login_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                RequestToServer(LOGIN_CODE);
                 //okhtttp
             }
         });

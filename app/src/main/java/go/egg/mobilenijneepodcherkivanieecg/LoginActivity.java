@@ -1,5 +1,6 @@
 package go.egg.mobilenijneepodcherkivanieecg;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -47,7 +48,12 @@ public class LoginActivity extends AppCompatActivity {
         login_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                RequestToServer(LOGIN_CODE);
+               // RequestToServer(LOGIN_CODE);
+                Intent intent = new Intent(LoginActivity.this,ChooseDeviceActivity.class);
+                startActivity(intent);
+
+              //  Intent intent = new Intent(LoginActivity.this,ChooseDeviceActivity.class);
+              //  startActivity(intent);
                 //okhtttp
             }
         });
@@ -64,6 +70,7 @@ public class LoginActivity extends AppCompatActivity {
                 //start other activity
             }
         });
+        System.out.println("here");
 
     }
 

@@ -3,7 +3,10 @@ package go.egg.mobilenijneepodcherkivanieecg;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -31,7 +34,7 @@ import java.util.Map;
 
 public class ChooseDeviceActivity extends AppCompatActivity {
 
-    private final int SCAN_TIME = 6000;
+    private final int SCAN_TIME =1000;
     private final int ENABLE_BLUETOOTH = 1;
     private final int ENABLE_PERMISSION = 2;
 
@@ -44,13 +47,22 @@ public class ChooseDeviceActivity extends AppCompatActivity {
     private Button start_scan;
     private Button stop_scan;
 
+
+
+    private Button temp_b;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
     private BleScanCallback mBleScanCallback;
     private BluetoothLeScanner mBluetoothLeScanner;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothDevice mBluetoothDevice;
+    private BluetoothGatt mGatt;
     private Map<String,BluetoothDevice> mBluetoothDeviceMap;//??
     private boolean scan_lable;
+    private boolean connected;
     private Handler mHandler;
+    private Handler mHandler2;
 
 
 
@@ -84,6 +96,17 @@ public class ChooseDeviceActivity extends AppCompatActivity {
         mBluetoothAdapter = mBluetoothManager.getAdapter();
 
         UpdateDeviceList();
+
+
+
+
+        temp_b = findViewById(R.id.temp_b);
+        temp_b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                System.out.println(connected);
+            }
+        });
 
     }
 
@@ -130,8 +153,6 @@ public class ChooseDeviceActivity extends AppCompatActivity {
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mBluetoothLeScanner.startScan(scanFilters,scanSettings,mBleScanCallback);
         scan_lable=true;
-        mHandler = new Handler();
-        mHandler.postDelayed(this::StopScan, SCAN_TIME);
 
         //scansetting
 
@@ -146,6 +167,7 @@ public class ChooseDeviceActivity extends AppCompatActivity {
             mBluetoothLeScanner.stopScan(mBleScanCallback);
         }
         scan_lable= false;
+
 
         mBleScanCallback=null;
         mBluetoothLeScanner=null;
@@ -184,6 +206,56 @@ public class ChooseDeviceActivity extends AppCompatActivity {
     private void requestLocationPermission() {
         requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, ENABLE_PERMISSION);
     }
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void connect_device(BluetoothDevice bluetoothDevice){
+
+        GgatClientCallBack ggatClientCallBack = new GgatClientCallBack();
+        mGatt = mBluetoothDevice.connectGatt(this,false,ggatClientCallBack, 2);
+
+    }
+
+    private class GgatClientCallBack extends BluetoothGattCallback{
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            System.out.println("QWekqwejqwhejqwhejqwhejqwhjehjqwhej");
+
+
+          //  super.onConnectionStateChange(gatt, status, newState);
+
+            if(status==BluetoothGatt.GATT_FAILURE){
+                System.out.println("WHAT1");
+                System.out.println(status);
+                disconnectGgatServer();
+                return;
+            }else if(status!=BluetoothGatt.GATT_SUCCESS){
+                System.out.println("WHAT2");
+                System.out.println(status);
+
+                disconnectGgatServer();
+                return;
+            }
+            if(newState== BluetoothProfile.STATE_CONNECTED){
+                connected=true;
+
+                System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                gatt.discoverServices();
+            }else if(newState==BluetoothProfile.STATE_DISCONNECTED){
+                System.out.println("WHAT3");
+
+                disconnectGgatServer();
+            }
+
+        }
+    }
+    private void disconnectGgatServer(){
+        if(mGatt!=null){
+            mGatt.disconnect();
+            mGatt.close();
+        }
+        System.out.println("No");
+        mHandler2=null;
+        connected=false;
+    }
 
 
 
@@ -214,9 +286,12 @@ public class ChooseDeviceActivity extends AppCompatActivity {
             textView.setText(mString);
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public void onClick(View view) {
-
+            BluetoothDevice bluetoothDevice = mDeviceMap.get_map().get(mString);
+            mBluetoothDevice = bluetoothDevice;
+            connect_device(mBluetoothDevice);
         }
     }
     private class DeviceAdapter extends RecyclerView.Adapter<DeviceHolder>{

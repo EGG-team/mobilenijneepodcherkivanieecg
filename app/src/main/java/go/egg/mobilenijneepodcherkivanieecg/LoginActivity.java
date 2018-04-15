@@ -41,10 +41,6 @@ public class LoginActivity extends AppCompatActivity {
 
         login_text = findViewById(R.id.login_edit);
         password_text = findViewById(R.id.password_edit);
-        login_button = findViewById(R.id.login_button);
-        registration_button = findViewById(R.id.registration_button);
-        ofline_button = findViewById(R.id.offline_button);
-
         login_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

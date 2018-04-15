@@ -5,6 +5,9 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattServer;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -28,9 +31,14 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import static android.bluetooth.BluetoothGattService.*;
 
 public class ChooseDeviceActivity extends AppCompatActivity {
 
@@ -46,10 +54,10 @@ public class ChooseDeviceActivity extends AppCompatActivity {
 
     private Button start_scan;
     private Button stop_scan;
+    private boolean     mInitialized;
 
+    private Button temp;
 
-
-    private Button temp_b;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
     private BleScanCallback mBleScanCallback;
@@ -69,6 +77,8 @@ public class ChooseDeviceActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose_device);
@@ -97,19 +107,32 @@ public class ChooseDeviceActivity extends AppCompatActivity {
 
         UpdateDeviceList();
 
+        temp =findViewById(R.id.temp_b);
+        temp.setOnClickListener(v->send_msg());
 
-
-
-        temp_b = findViewById(R.id.temp_b);
-        temp_b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                System.out.println(connected);
-            }
-        });
 
     }
 
+
+    private void send_msg(){
+        if(!mInitialized&&!connected)
+            return;
+
+         String s = "HER";
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        BluetoothGattService service = mGatt.getService(UUID.fromString("0x1101"));
+        BluetoothGattCharacteristic characteristic = service.getCharacteristics().get(0);
+        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+        characteristic.setValue(data);
+
+
+
+    }
 
     //BLE
     private class BleScanCallback extends ScanCallback{
@@ -217,18 +240,17 @@ public class ChooseDeviceActivity extends AppCompatActivity {
     private class GgatClientCallBack extends BluetoothGattCallback{
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            System.out.println("QWekqwejqwhejqwhejqwhejqwhjehjqwhej");
+            System.out.println(status);
 
 
-          //  super.onConnectionStateChange(gatt, status, newState);
+
+            super.onConnectionStateChange(gatt, status, newState);
 
             if(status==BluetoothGatt.GATT_FAILURE){
-                System.out.println("WHAT1");
                 System.out.println(status);
                 disconnectGgatServer();
                 return;
             }else if(status!=BluetoothGatt.GATT_SUCCESS){
-                System.out.println("WHAT2");
                 System.out.println(status);
 
                 disconnectGgatServer();
@@ -237,25 +259,63 @@ public class ChooseDeviceActivity extends AppCompatActivity {
             if(newState== BluetoothProfile.STATE_CONNECTED){
                 connected=true;
 
-                System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                Toast.makeText(ChooseDeviceActivity.this,"Подключение успешно!",Toast.LENGTH_SHORT).show();
                 gatt.discoverServices();
             }else if(newState==BluetoothProfile.STATE_DISCONNECTED){
-                System.out.println("WHAT3");
 
                 disconnectGgatServer();
             }
 
         }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+            if(status!=BluetoothGatt.GATT_SUCCESS){
+                //disconnectGgatServer();
+
+                return;
+            }
+            String string_uuid1 = "6e400001‑b5a3‑f393‑e0a9‑e50e24dcca9e";
+            String string_uuid2 = "0000ffe0‑0000‑1000‑8000‑00805f9b34fb";
+            UUID uuid1 = UUID.fromString(string_uuid1);
+
+
+
+            UUID uuid2 = UUID.fromString(string_uuid2);
+            System.out.println("^666666666666666666666666666666666666666666666666");
+
+
+
+            BluetoothGattService service = gatt.getService(uuid1);
+            BluetoothGattCharacteristic characteristic = service.getCharacteristic(uuid2);
+            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+            mInitialized = gatt.setCharacteristicNotification(characteristic, true);
+            String s = "e04fd020ea3a6910a2d808002b30309d";
+            int len = s.length();
+            byte[] data = new byte[len / 2];
+            for (int i = 0; i < len; i += 2) {
+                data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                        + Character.digit(s.charAt(i+1), 16));
+            }
+            characteristic.setValue(data);
+            System.out.println("WTF");
+
+        }
+
+
+
     }
     private void disconnectGgatServer(){
         if(mGatt!=null){
             mGatt.disconnect();
             mGatt.close();
         }
-        System.out.println("No");
         mHandler2=null;
         connected=false;
     }
+
+
 
 
 

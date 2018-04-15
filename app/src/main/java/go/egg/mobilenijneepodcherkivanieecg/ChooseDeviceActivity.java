@@ -276,18 +276,29 @@ public class ChooseDeviceActivity extends AppCompatActivity {
 
                 return;
             }
+
+
+
             String string_uuid1 = "6e400001‑b5a3‑f393‑e0a9‑e50e24dcca9e";
             String string_uuid2 = "0000ffe0‑0000‑1000‑8000‑00805f9b34fb";
-            UUID uuid1 = UUID.fromString(string_uuid1);
+            byte[] data2 = {6, 101, 4, 0, 0, 0, 0, 1, 98, 5, 97, 3, 102, 3, 9, 3, 101, 0, 97, 9, 101, 5, 0, 101, 2, 4, 100, 99, 99, 97, 9, 101};
+            byte[] data3 = {0, 0, 0, 0, 102, 102, 101, 0, 0, 0, 0, 0, 1, 0, 0, 0, 8, 0, 0, 0, 0, 0, 8, 0, 5, 102, 9, 98, 3, 4, 102, 98};
 
+
+
+            //UUID uuid1 = UUID.fromString(string_uuid1);
+            UUID uuid1= UUID.nameUUIDFromBytes(data2);
 
 //
-            UUID uuid2 = UUID.fromString(string_uuid2);
-            System.out.println("^666666666666666666666666666666666666666666666666");
+            UUID uuid2 = UUID.nameUUIDFromBytes(data3);
+            System.out.println(uuid1.toString()+"              "+uuid2.toString());
 
-
+            for(BluetoothGattService service:gatt.getServices()){
+                System.out.println(service.getUuid());
+            }
 
             BluetoothGattService service = gatt.getService(uuid1);
+
             BluetoothGattCharacteristic characteristic = service.getCharacteristic(uuid2);
             characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
             mInitialized = gatt.setCharacteristicNotification(characteristic, true);

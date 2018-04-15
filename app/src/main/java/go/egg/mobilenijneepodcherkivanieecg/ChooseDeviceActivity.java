@@ -281,7 +281,7 @@ public class ChooseDeviceActivity extends AppCompatActivity {
             UUID uuid1 = UUID.fromString(string_uuid1);
 
 
-
+//
             UUID uuid2 = UUID.fromString(string_uuid2);
             System.out.println("^666666666666666666666666666666666666666666666666");
 
